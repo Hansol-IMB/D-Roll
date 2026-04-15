@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>듀오롤 제작 계산기</title>
+  <style>
+.footer {
+  position: static;   /* fixed → static */
+  margin-top: 40px;
+  text-align: center;
+  font-size: 12px;
+  color: #aaa;
+  font-weight: normal;
+}
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 24px;
+      font-family: Arial, "Malgun Gothic", sans-serif;
+      background: #f4f4f4;
+      color: #111;
+    }
+
+    .container {
+      max-width: 980px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+
+    h1 {
+      margin: 0 0 16px;
+      font-size: 24px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .field label {
+      display: block;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    input, select {
+      width: 100%;
+      height: 44px;
+      padding: 0 12px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      font-size: 15px;
+      background: #fff;
+    }
+
+    .group-wrap {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .group-btn {
+      flex: 1;
+      height: 42px;
+      border: 1px solid #cfcfcf;
+      border-radius: 10px;
+      background: #f7f7f7;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.15s ease;
+    }
+
+    .group-btn.active {
+      background: #111;
+      color: #fff;
+      border-color: #111;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    th {
+      background: #f0f0f0;
+    }
+
+    .status-green {
+      color: #137333;
+      font-weight: 700;
+      background: #e9f7ef;
+    }
+
+    .status-yellow {
+      color: #8a6d00;
+      font-weight: 700;
+      background: #fff7d6;
+    }
+
+    .status-red {
+      color: #c62828;
+      font-weight: 700;
+      background: #fdecec;
+    }
+
+    @media (max-width: 760px) {
+      .grid-2 {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h1>듀오롤 제작 계산기</h1>
+      <div class="grid-2">
+        <div class="field">
+          <label for="height">높이 H (mm)</label>
+          <input type="number" id="height" value="1800" min="1" step="1" />
+        </div>
+        <div class="field">
+          <label>튜브 지름</label>
+          <input type="text" value="30 mm" disabled />
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="grid-2">
+        <div class="field">
+          <label>원단1 선택</label>
+          <div class="group-wrap" id="group1Buttons">
+            <button type="button" class="group-btn active" data-group="롤">롤</button>
+            <button type="button" class="group-btn" data-group="트윈스/콤비">트윈스 / 콤비</button>
+          </div>
+          <select id="fabric1"></select>
+        </div>
+
+        <div class="field">
+          <label>원단2 선택</label>
+          <div class="group-wrap" id="group2Buttons">
+            <button type="button" class="group-btn active" data-group="롤">롤</button>
+            <button type="button" class="group-btn" data-group="트윈스/콤비">트윈스 / 콤비</button>
+          </div>
+          <select id="fabric2"></select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <table>
+        <thead>
+          <tr>
+            <th>구분</th>
+            <th>그룹</th>
+            <th>원단명</th>
+            <th>두께 t</th>
+            <th>높이</th>
+            <th>지름 D</th>
+            <th>반지름 R</th>
+            <th>판정</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+<div style="margin-top:10px; color:#888; font-size:13px;">
+  제작가능 범위 : 반지름 R &lt; 22mm
+</div>
+    </div>
+  </div>
+
+  <script>
+    const fabricGroups = {
+      "롤": [
+        { name: "Coral", t: 0.33 },
+        { name: "Halong Bay", t: 0.44 },
+        { name: "Polar night", t: 0.60 },
+        { name: "글리터", t: 0.31 },
+        { name: "레놀라 폼 암막", t: 0.48 },
+        { name: "레인", t: 0.34 },
+        { name: "마칼루 폼 암막", t: 0.45 },
+        { name: "메스티아", t: 0.35 },
+        { name: "밀레 암막", t: 0.58 },
+        { name: "비비드", t: 0.38 },
+        { name: "썬스크린 4TW", t: 0.75 },
+        { name: "썬플렛 방염", t: 0.38 },
+        { name: "에코스크린 폼 암막", t: 0.72 },
+        { name: "에코플랫", t: 0.38 },
+        { name: "엘바스", t: 0.30 },
+        { name: "체로키 폼 암막", t: 0.61 },
+        { name: "타히티", t: 0.33 },
+        { name: "트레비", t: 0.47 },
+        { name: "마리나 폼 암막", t: 0.64 },
+        { name: "라데나", t: 0.35 },
+        { name: "VGR 암막", t: 0.41 },
+        { name: "그라나다", t: 0.30 },
+        { name: "그렌드", t: 0.48 },
+        { name: "누벨 암막", t: 0.27 },
+        { name: "라몽", t: 0.35 },
+        { name: "렉스", t: 0.58 },
+        { name: "마일드", t: 0.35 },
+        { name: "모레아", t: 0.46 },
+        { name: "솔트레이크 암막", t: 0.35 },
+        { name: "신디", t: 0.37 },
+        { name: "썬스크린 3N1% (방염)", t: 0.68 },
+        { name: "썬스크린 3N1% 메탈", t: 0.68 },
+        { name: "썬스크린 3N3% (방염)", t: 0.57 },
+        { name: "썬스크린 3N3% 메탈", t: 0.57 },
+        { name: "썬스크린 4DP (1%)", t: 1.00 },
+        { name: "썬스크린 4N3% (방염)", t: 0.77 },
+        { name: "썬힐", t: 0.56 },
+        { name: "아리지", t: 0.73 },
+        { name: "에코스크린 방염", t: 0.53 },
+        { name: "엑셀 암막", t: 0.28 },
+        { name: "웰링턴 폼 암막", t: 0.50 },
+        { name: "제이드", t: 0.78 },
+        { name: "카운티", t: 0.40 },
+        { name: "카프리", t: 0.50 },
+        { name: "코스카 폼 암막", t: 0.50 },
+        { name: "토리노 암막", t: 0.72 },
+        { name: "파스텔", t: 0.35 },
+        { name: "하임", t: 0.86 },
+        { name: "해치랜드", t: 0.40 },
+        { name: "화이트가든", t: 0.35 }
+      ],
+      "트윈스/콤비": [
+        { name: "TWG GOLD", t: 0.35 },
+        { name: "메탈", t: 0.34 },
+        { name: "앰버", t: 0.27 },
+        { name: "스파클", t: 0.46 },
+        { name: "Acaba Ⅱ 암막", t: 0.51 },
+        { name: "Alpine", t: 0.29 },
+        { name: "Belita", t: 0.48 },
+        { name: "Celestial", t: 0.32 },
+        { name: "Evere 암막", t: 0.42 },
+        { name: "데이지 암막", t: 0.42 },
+        { name: "델로스 암막", t: 0.49 },
+        { name: "렌토 암막", t: 0.49 },
+        { name: "루이스", t: 0.35 },
+        { name: "린넨 암막", t: 0.69 },
+        { name: "몰타", t: 0.37 },
+        { name: "베일리", t: 0.29 },
+        { name: "아비스", t: 0.26 },
+        { name: "카밀라 암막 (방염)", t: 0.45 },
+        { name: "팀버룩 뷰", t: 0.45 },
+        { name: "파르마 암막", t: 0.49 },
+        { name: "나오미 암막", t: 0.62 },
+        { name: "더블린", t: 0.34 },
+        { name: "라피아 암막", t: 0.50 },
+        { name: "리디아 암막", t: 0.44 },
+        { name: "리베라", t: 0.28 },
+        { name: "린넨 지브라", t: 0.33 },
+        { name: "모나코", t: 0.51 },
+        { name: "모닝", t: 0.25 },
+        { name: "비아르 암막", t: 0.46 },
+        { name: "빌바오 암막", t: 0.67 },
+        { name: "세잔 암막", t: 0.60 },
+        { name: "아델라 암막", t: 0.43 },
+        { name: "안도라 암막", t: 0.42 },
+        { name: "올리브", t: 0.61 },
+        { name: "카라만 암막", t: 0.42 },
+        { name: "크라비", t: 0.43 },
+        { name: "팀버룩", t: 0.45 },
+        { name: "휘닉스 암막", t: 0.50 }
+      ]
+    };
+
+    const state = {
+      group1: "롤",
+      group2: "롤"
+    };
+
+    const heightEl = document.getElementById("height");
+    const fabric1El = document.getElementById("fabric1");
+    const fabric2El = document.getElementById("fabric2");
+    const tableBodyEl = document.getElementById("tableBody");
+
+    function calcD(H, t) {
+  const d0 = 30;
+  const a = 2 * Math.PI * d0;
+
+  const I = (
+    (-a + Math.sqrt((a * a) + (8 * Math.PI * H * t)))
+    / (2 * Math.PI * t)
+  );
+
+  return (2 * I * t) + d0;
+}
+
+    function getHeightForCalc(baseHeight, groupName) {
+      return groupName === "트윈스/콤비" ? baseHeight * 2 : baseHeight;
+    }
+
+    function populateFabricSelect(groupName, selectEl, selectedIndex = 0) {
+      const items = fabricGroups[groupName] || [];
+      selectEl.innerHTML = "";
+
+      items.forEach((item, index) => {
+        const option = new Option(`${item.name} (t=${item.t})`, String(index));
+        selectEl.add(option);
+      });
+
+      if (items.length > 0) {
+        selectEl.value = String(Math.min(selectedIndex, items.length - 1));
+      }
+    }
+
+    function getSelectedFabric(groupName, selectEl) {
+      const items = fabricGroups[groupName] || [];
+      return items[Number(selectEl.value)] || items[0];
+    }
+
+    function getStatus(radius1, radius2) {
+      if (radius1 < 20 && radius2 < 20) {
+        return {
+          text: "제작가능",
+          className: "status-green"
+        };
+      }
+
+      if (radius1 <= 22 && radius2 <= 22) {
+        return {
+          text: "제작가능 (원단 쓸림 가능성 높음)",
+          className: "status-yellow"
+        };
+      }
+
+      return {
+        text: "제작불가",
+        className: "status-red"
+      };
+    }
+
+    function bindGroupButtons(wrapperId, stateKey, selectEl) {
+      const wrapper = document.getElementById(wrapperId);
+      const buttons = wrapper.querySelectorAll(".group-btn");
+
+      buttons.forEach((button) => {
+        button.addEventListener("click", () => {
+          state[stateKey] = button.dataset.group;
+
+          buttons.forEach((btn) => {
+            btn.classList.toggle("active", btn === button);
+          });
+
+          populateFabricSelect(state[stateKey], selectEl, 0);
+          render();
+        });
+      });
+    }
+
+    function render() {
+      const H = Number(heightEl.value);
+
+      if (!H || H <= 0) {
+        tableBodyEl.innerHTML = "";
+        return;
+      }
+
+      const fabric1 = getSelectedFabric(state.group1, fabric1El);
+      const fabric2 = getSelectedFabric(state.group2, fabric2El);
+
+      if (!fabric1 || !fabric2) {
+        tableBodyEl.innerHTML = "";
+        return;
+      }
+
+      // 계산용 높이
+      const calcH1 = getHeightForCalc(H, state.group1);
+      const calcH2 = getHeightForCalc(H, state.group2);
+
+      // 실제 표시는 원본 높이 H 그대로
+      const displayH1 = H;
+      const displayH2 = H;
+
+      const D1 = calcD(calcH1, fabric1.t);
+      const D2 = calcD(calcH2, fabric2.t);
+
+      const R1 = D1 / 2;
+      const R2 = D2 / 2;
+
+      const status = getStatus(R1, R2);
+
+      tableBodyEl.innerHTML = `
+        <tr>
+          <td>D1</td>
+          <td>${state.group1}</td>
+          <td>${fabric1.name}</td>
+          <td>${fabric1.t}</td>
+          <td>${displayH1}</td>
+          <td>${D1.toFixed(2)}</td>
+          <td>${R1.toFixed(2)}</td>
+          <td rowspan="2" class="${status.className}">${status.text}</td>
+        </tr>
+        <tr>
+          <td>D2</td>
+          <td>${state.group2}</td>
+          <td>${fabric2.name}</td>
+          <td>${fabric2.t}</td>
+          <td>${displayH2}</td>
+          <td>${D2.toFixed(2)}</td>
+          <td>${R2.toFixed(2)}</td>
+        </tr>
+      `;
+    }
+
+    heightEl.addEventListener("input", render);
+    fabric1El.addEventListener("change", render);
+    fabric2El.addEventListener("change", render);
+
+    populateFabricSelect(state.group1, fabric1El, 0);
+    populateFabricSelect(state.group2, fabric2El, 1);
+
+    if ((fabricGroups[state.group2] || []).length > 1) {
+      fabric2El.value = "1";
+    }
+
+    bindGroupButtons("group1Buttons", "group1", fabric1El);
+    bindGroupButtons("group2Buttons", "group2", fabric2El);
+
+    render();
+  </script>
+  </div> <!-- container 끝 -->
+
+  <div class="footer">
+    Presented by Dexter / Hansol-IMB
+  </div>
+</body>
+</html>
