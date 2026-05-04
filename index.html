@@ -10,11 +10,41 @@
     }
 
     body {
+      --category-bg: #f4f4f4;
+      --category-soft: #fff;
+      --category-border: #e2e2e2;
+      --category-accent: #111;
+      --category-accent-strong: #111;
       margin: 0;
       padding: 24px;
       font-family: Arial, "Malgun Gothic", sans-serif;
-      background: #f4f4f4;
+      background: var(--category-bg);
       color: #111;
+      transition: background 0.2s ease;
+    }
+
+    body[data-category="double"] {
+      --category-bg: #f3f8ff;
+      --category-soft: #eef6ff;
+      --category-border: #c9def7;
+      --category-accent: #b7d4f6;
+      --category-accent-strong: #4278b0;
+    }
+
+    body[data-category="duo"] {
+      --category-bg: #f4fbf4;
+      --category-soft: #edf8ef;
+      --category-border: #c9e7cf;
+      --category-accent: #bfe5c8;
+      --category-accent-strong: #3f7c4d;
+    }
+
+    body[data-category="twoWay"] {
+      --category-bg: #fff8f2;
+      --category-soft: #fff1e8;
+      --category-border: #f2d2be;
+      --category-accent: #f6d2bc;
+      --category-accent-strong: #9a6547;
     }
 
     .app-shell {
@@ -29,21 +59,24 @@
     .sidebar,
     .panel {
       background: #fff;
-      border: 1px solid #e2e2e2;
+      border: 1px solid var(--category-border);
       border-radius: 8px;
       box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+      transition: border-color 0.2s ease, background 0.2s ease;
     }
 
     .sidebar {
       position: sticky;
       top: 24px;
       padding: 16px;
+      background: var(--category-soft);
     }
 
     .tree-title {
       margin: 0 0 14px;
       font-size: 18px;
       font-weight: 800;
+      color: var(--category-accent-strong);
     }
 
     .tree,
@@ -70,8 +103,8 @@
       top: 6px;
       width: 6px;
       height: 6px;
-      border-left: 2px solid #777;
-      border-bottom: 2px solid #777;
+      border-left: 2px solid var(--category-accent-strong);
+      border-bottom: 2px solid var(--category-accent-strong);
       transform: rotate(-45deg);
     }
 
@@ -101,12 +134,12 @@
     }
 
     .tree-node.active {
-      background: #111;
-      color: #fff;
+      background: var(--category-accent);
+      color: #111;
     }
 
     .tree-node.active::before {
-      border-color: #fff;
+      border-color: var(--category-accent-strong);
     }
 
     .content {
@@ -122,6 +155,7 @@
       margin: 0 0 16px;
       font-size: 24px;
       letter-spacing: 0;
+      color: var(--category-accent-strong);
     }
 
     .grid-2 {
@@ -147,6 +181,18 @@
       background: #fff;
     }
 
+    .tube-select {
+      display: none;
+    }
+
+    body[data-category="duo"] .tube-fixed {
+      display: none;
+    }
+
+    body[data-category="duo"] .tube-select {
+      display: block;
+    }
+
     .group-wrap {
       display: flex;
       gap: 8px;
@@ -166,9 +212,9 @@
     }
 
     .group-btn.active {
-      background: #111;
-      color: #fff;
-      border-color: #111;
+      background: var(--category-accent);
+      color: #111;
+      border-color: var(--category-accent-strong);
     }
 
     .table-wrap {
@@ -193,7 +239,7 @@
     }
 
     th {
-      background: #f0f0f0;
+      background: var(--category-soft);
     }
 
     .status-green {
@@ -225,6 +271,7 @@
       min-height: 260px;
       padding: 44px 20px;
       text-align: center;
+      background: var(--category-soft);
     }
 
     .maintenance-title {
@@ -291,7 +338,7 @@
     }
   </style>
 </head>
-<body>
+<body data-category="double">
   <div class="app-shell">
     <aside class="sidebar" aria-label="분류 선택">
       <div class="tree-title">D-Roll</div>
@@ -317,7 +364,11 @@
           </div>
           <div class="field">
             <label>튜브 지름</label>
-            <input type="text" value="30 mm" disabled />
+            <input type="text" class="tube-fixed" value="30 mm" disabled />
+            <select id="tubeDiameter" class="tube-select" aria-label="튜브 지름 선택">
+              <option value="30">30 mm</option>
+              <option value="38">38 mm</option>
+            </select>
           </div>
         </div>
       </section>
@@ -362,7 +413,7 @@
             <tbody id="tableBody"></tbody>
           </table>
         </div>
-        <div class="range-note">제작가능 범위 : 반지름 R &lt; 22mm</div>
+        <div class="range-note" id="rangeNote">제작가능 범위 : 반지름 R &lt; 22mm</div>
       </section>
 
       <section class="panel maintenance-panel" id="maintenancePanel">
@@ -377,6 +428,12 @@
       double: "더블롤 제작 계산기",
       duo: "듀오롤 제작 계산기",
       twoWay: "투웨이 점검중"
+    };
+
+    const rangeNotes = {
+      double: "제작가능 범위 : 반지름 R < 22mm",
+      duo: "제작가능 범위 : 반지름 R <= 28mm",
+      twoWay: ""
     };
 
     const fabricGroups = {
@@ -484,12 +541,14 @@
     const categoryTitleEl = document.getElementById("categoryTitle");
     const categoryButtons = document.querySelectorAll(".tree-node");
     const heightEl = document.getElementById("height");
+    const tubeDiameterEl = document.getElementById("tubeDiameter");
     const fabric1El = document.getElementById("fabric1");
     const fabric2El = document.getElementById("fabric2");
     const tableBodyEl = document.getElementById("tableBody");
+    const rangeNoteEl = document.getElementById("rangeNote");
 
-    function calcD(H, t) {
-      const d0 = 30;
+    function calcD(H, t, tubeDiameter) {
+      const d0 = tubeDiameter;
       const a = 2 * Math.PI * d0;
 
       const I = (
@@ -498,6 +557,10 @@
       );
 
       return (2 * I * t) + d0;
+    }
+
+    function getTubeDiameter() {
+      return state.category === "duo" ? Number(tubeDiameterEl.value) : 30;
     }
 
     function getHeightForCalc(baseHeight, groupName) {
@@ -524,14 +587,17 @@
     }
 
     function getStatus(radius1, radius2) {
-      if (radius1 < 20 && radius2 < 20) {
+      const standardLimit = state.category === "duo" ? 26 : 20;
+      const maxLimit = state.category === "duo" ? 28 : 22;
+
+      if (radius1 < standardLimit && radius2 < standardLimit) {
         return {
           text: "제작가능",
           className: "status-green"
         };
       }
 
-      if (radius1 <= 22 && radius2 <= 22) {
+      if (radius1 <= maxLimit && radius2 <= maxLimit) {
         return {
           text: "제작가능 (원단 쓸림 가능성 높음)",
           className: "status-yellow"
@@ -548,9 +614,11 @@
       state.category = category;
       const isMaintenance = category === "twoWay";
 
+      document.body.dataset.category = category;
       contentAreaEl.classList.toggle("maintenance-mode", isMaintenance);
       categoryTitleEl.textContent = categories[category];
       document.title = categories[category];
+      rangeNoteEl.textContent = rangeNotes[category] || "";
 
       categoryButtons.forEach((button) => {
         button.classList.toggle("active", button.dataset.category === category);
@@ -598,6 +666,7 @@
         return;
       }
 
+      const tubeDiameter = getTubeDiameter();
       const fabric1 = getSelectedFabric(state.group1, fabric1El);
       const fabric2 = getSelectedFabric(state.group2, fabric2El);
 
@@ -610,8 +679,8 @@
       const calcH2 = getHeightForCalc(H, state.group2);
       const displayH1 = H;
       const displayH2 = H;
-      const D1 = calcD(calcH1, fabric1.t);
-      const D2 = calcD(calcH2, fabric2.t);
+      const D1 = calcD(calcH1, fabric1.t, tubeDiameter);
+      const D2 = calcD(calcH2, fabric2.t, tubeDiameter);
       const R1 = D1 / 2;
       const R2 = D2 / 2;
       const status = getStatus(R1, R2);
@@ -640,6 +709,7 @@
     }
 
     heightEl.addEventListener("input", render);
+    tubeDiameterEl.addEventListener("change", render);
     fabric1El.addEventListener("change", render);
     fabric2El.addEventListener("change", render);
 
