@@ -3,17 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>듀오롤 제작 계산기</title>
+  <title>D-Roll 제작 계산기</title>
   <style>
-.footer {
-  position: static;   /* fixed → static */
-  margin-top: 40px;
-  text-align: center;
-  font-size: 12px;
-  color: #aaa;
-  font-weight: normal;
-}
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
 
     body {
       margin: 0;
@@ -23,22 +17,111 @@
       color: #111;
     }
 
-    .container {
-      max-width: 980px;
+    .app-shell {
+      display: grid;
+      grid-template-columns: 220px minmax(0, 1fr);
+      gap: 16px;
+      max-width: 1180px;
       margin: 0 auto;
+      align-items: start;
     }
 
-    .card {
+    .sidebar,
+    .panel {
       background: #fff;
-      border-radius: 14px;
+      border: 1px solid #e2e2e2;
+      border-radius: 8px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 24px;
+      padding: 16px;
+    }
+
+    .tree-title {
+      margin: 0 0 14px;
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .tree,
+    .tree ul {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .tree-branch {
+      display: block;
+      margin-bottom: 8px;
+      padding-left: 14px;
+      color: #666;
+      font-size: 13px;
+      font-weight: 700;
+      position: relative;
+    }
+
+    .tree-branch::before {
+      content: "";
+      position: absolute;
+      left: 2px;
+      top: 6px;
+      width: 6px;
+      height: 6px;
+      border-left: 2px solid #777;
+      border-bottom: 2px solid #777;
+      transform: rotate(-45deg);
+    }
+
+    .tree-node {
+      width: 100%;
+      height: 38px;
+      margin: 3px 0;
+      padding: 0 12px 0 22px;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: #333;
+      font-size: 14px;
+      font-weight: 700;
+      text-align: left;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .tree-node::before {
+      content: "";
+      position: absolute;
+      left: 8px;
+      top: 17px;
+      width: 6px;
+      border-top: 1px solid #aaa;
+    }
+
+    .tree-node.active {
+      background: #111;
+      color: #fff;
+    }
+
+    .tree-node.active::before {
+      border-color: #fff;
+    }
+
+    .content {
+      min-width: 0;
+    }
+
+    .panel {
       padding: 20px;
       margin-bottom: 16px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
     }
 
     h1 {
       margin: 0 0 16px;
       font-size: 24px;
+      letter-spacing: 0;
     }
 
     .grid-2 {
@@ -53,12 +136,13 @@
       margin-bottom: 8px;
     }
 
-    input, select {
+    input,
+    select {
       width: 100%;
       height: 44px;
       padding: 0 12px;
       border: 1px solid #ccc;
-      border-radius: 10px;
+      border-radius: 6px;
       font-size: 15px;
       background: #fff;
     }
@@ -71,9 +155,9 @@
 
     .group-btn {
       flex: 1;
-      height: 42px;
+      min-height: 42px;
       border: 1px solid #cfcfcf;
-      border-radius: 10px;
+      border-radius: 6px;
       background: #f7f7f7;
       font-size: 14px;
       font-weight: 700;
@@ -87,17 +171,25 @@
       border-color: #111;
     }
 
+    .table-wrap {
+      width: 100%;
+      overflow-x: auto;
+    }
+
     table {
       width: 100%;
+      min-width: 760px;
       border-collapse: collapse;
       margin-top: 12px;
     }
 
-    th, td {
+    th,
+    td {
       border: 1px solid #ddd;
       padding: 10px;
       text-align: center;
       font-size: 14px;
+      white-space: nowrap;
     }
 
     th {
@@ -122,7 +214,49 @@
       background: #fdecec;
     }
 
-    @media (max-width: 760px) {
+    .range-note {
+      margin-top: 10px;
+      color: #777;
+      font-size: 13px;
+    }
+
+    .footer {
+      max-width: 1180px;
+      margin: 40px auto 0;
+      text-align: center;
+      font-size: 12px;
+      color: #888;
+      font-weight: normal;
+    }
+
+    @media (max-width: 820px) {
+      body {
+        padding: 14px;
+      }
+
+      .app-shell {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        position: static;
+      }
+
+      .tree ul {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 6px;
+      }
+
+      .tree-node {
+        padding: 0 8px;
+        text-align: center;
+      }
+
+      .tree-node::before {
+        display: none;
+      }
+
       .grid-2 {
         grid-template-columns: 1fr;
       }
@@ -130,66 +264,88 @@
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="card">
-      <h1>듀오롤 제작 계산기</h1>
-      <div class="grid-2">
-        <div class="field">
-          <label for="height">높이 H (mm)</label>
-          <input type="number" id="height" value="1800" min="1" step="1" />
-        </div>
-        <div class="field">
-          <label>튜브 지름</label>
-          <input type="text" value="30 mm" disabled />
-        </div>
-      </div>
-    </div>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="분류 선택">
+      <div class="tree-title">D-Roll</div>
+      <ul class="tree">
+        <li>
+          <span class="tree-branch">제품 분류</span>
+          <ul>
+            <li><button type="button" class="tree-node active" data-category="double">더블롤</button></li>
+            <li><button type="button" class="tree-node" data-category="duo">듀오롤</button></li>
+            <li><button type="button" class="tree-node" data-category="twoWay">투웨이</button></li>
+          </ul>
+        </li>
+      </ul>
+    </aside>
 
-    <div class="card">
-      <div class="grid-2">
-        <div class="field">
-          <label>원단1 선택</label>
-          <div class="group-wrap" id="group1Buttons">
-            <button type="button" class="group-btn active" data-group="롤">롤</button>
-            <button type="button" class="group-btn" data-group="트윈스/콤비">트윈스 / 콤비</button>
+    <main class="content">
+      <section class="panel">
+        <h1 id="categoryTitle">더블롤 제작 계산기</h1>
+        <div class="grid-2">
+          <div class="field">
+            <label for="height">높이 H (mm)</label>
+            <input type="number" id="height" value="1800" min="1" step="1" />
           </div>
-          <select id="fabric1"></select>
-        </div>
-
-        <div class="field">
-          <label>원단2 선택</label>
-          <div class="group-wrap" id="group2Buttons">
-            <button type="button" class="group-btn active" data-group="롤">롤</button>
-            <button type="button" class="group-btn" data-group="트윈스/콤비">트윈스 / 콤비</button>
+          <div class="field">
+            <label>튜브 지름</label>
+            <input type="text" value="30 mm" disabled />
           </div>
-          <select id="fabric2"></select>
         </div>
-      </div>
-    </div>
+      </section>
 
-    <div class="card">
-      <table>
-        <thead>
-          <tr>
-            <th>구분</th>
-            <th>그룹</th>
-            <th>원단명</th>
-            <th>두께 t</th>
-            <th>높이</th>
-            <th>지름 D</th>
-            <th>반지름 R</th>
-            <th>판정</th>
-          </tr>
-        </thead>
-        <tbody id="tableBody"></tbody>
-      </table>
-<div style="margin-top:10px; color:#888; font-size:13px;">
-  제작가능 범위 : 반지름 R &lt; 22mm
-</div>
-    </div>
+      <section class="panel">
+        <div class="grid-2">
+          <div class="field">
+            <label>원단1 선택</label>
+            <div class="group-wrap" id="group1Buttons">
+              <button type="button" class="group-btn active" data-group="롤">롤</button>
+              <button type="button" class="group-btn" data-group="트윈스/콤비">트윈스 / 콤비</button>
+            </div>
+            <select id="fabric1"></select>
+          </div>
+
+          <div class="field">
+            <label>원단2 선택</label>
+            <div class="group-wrap" id="group2Buttons">
+              <button type="button" class="group-btn active" data-group="롤">롤</button>
+              <button type="button" class="group-btn" data-group="트윈스/콤비">트윈스 / 콤비</button>
+            </div>
+            <select id="fabric2"></select>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>구분</th>
+                <th>그룹</th>
+                <th>원단명</th>
+                <th>두께 t</th>
+                <th>높이</th>
+                <th>지름 D</th>
+                <th>반지름 R</th>
+                <th>판정</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+        <div class="range-note">제작가능 범위 : 반지름 R &lt; 22mm</div>
+      </section>
+    </main>
   </div>
 
   <script>
+    const categories = {
+      double: "더블롤 제작 계산기",
+      duo: "듀오롤 제작 계산기",
+      twoWay: "투웨이 제작 계산기"
+    };
+
     const fabricGroups = {
       "롤": [
         { name: "Coral", t: 0.33 },
@@ -286,26 +442,29 @@
     };
 
     const state = {
+      category: "double",
       group1: "롤",
       group2: "롤"
     };
 
+    const categoryTitleEl = document.getElementById("categoryTitle");
+    const categoryButtons = document.querySelectorAll(".tree-node");
     const heightEl = document.getElementById("height");
     const fabric1El = document.getElementById("fabric1");
     const fabric2El = document.getElementById("fabric2");
     const tableBodyEl = document.getElementById("tableBody");
 
     function calcD(H, t) {
-  const d0 = 30;
-  const a = 2 * Math.PI * d0;
+      const d0 = 30;
+      const a = 2 * Math.PI * d0;
 
-  const I = (
-    (-a + Math.sqrt((a * a) + (8 * Math.PI * H * t)))
-    / (2 * Math.PI * t)
-  );
+      const I = (
+        (-a + Math.sqrt((a * a) + (8 * Math.PI * H * t)))
+        / (2 * Math.PI * t)
+      );
 
-  return (2 * I * t) + d0;
-}
+      return (2 * I * t) + d0;
+    }
 
     function getHeightForCalc(baseHeight, groupName) {
       return groupName === "트윈스/콤비" ? baseHeight * 2 : baseHeight;
@@ -351,6 +510,26 @@
       };
     }
 
+    function setCategory(category) {
+      state.category = category;
+      categoryTitleEl.textContent = categories[category];
+      document.title = categories[category];
+
+      categoryButtons.forEach((button) => {
+        button.classList.toggle("active", button.dataset.category === category);
+      });
+
+      render();
+    }
+
+    function bindCategoryTree() {
+      categoryButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          setCategory(button.dataset.category);
+        });
+      });
+    }
+
     function bindGroupButtons(wrapperId, stateKey, selectEl) {
       const wrapper = document.getElementById(wrapperId);
       const buttons = wrapper.querySelectorAll(".group-btn");
@@ -385,20 +564,14 @@
         return;
       }
 
-      // 계산용 높이
       const calcH1 = getHeightForCalc(H, state.group1);
       const calcH2 = getHeightForCalc(H, state.group2);
-
-      // 실제 표시는 원본 높이 H 그대로
       const displayH1 = H;
       const displayH2 = H;
-
       const D1 = calcD(calcH1, fabric1.t);
       const D2 = calcD(calcH2, fabric2.t);
-
       const R1 = D1 / 2;
       const R2 = D2 / 2;
-
       const status = getStatus(R1, R2);
 
       tableBodyEl.innerHTML = `
@@ -435,12 +608,11 @@
       fabric2El.value = "1";
     }
 
+    bindCategoryTree();
     bindGroupButtons("group1Buttons", "group1", fabric1El);
     bindGroupButtons("group2Buttons", "group2", fabric2El);
-
-    render();
+    setCategory(state.category);
   </script>
-  </div> <!-- container 끝 -->
 
   <div class="footer">
     Presented by Dexter / Hansol-IMB
