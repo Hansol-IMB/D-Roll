@@ -220,6 +220,34 @@
       font-size: 13px;
     }
 
+    .maintenance-panel {
+      display: none;
+      min-height: 260px;
+      padding: 44px 20px;
+      text-align: center;
+    }
+
+    .maintenance-title {
+      margin: 0 0 10px;
+      font-size: 26px;
+      font-weight: 800;
+    }
+
+    .maintenance-message {
+      margin: 0;
+      color: #666;
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .content.maintenance-mode .calculator-panel {
+      display: none;
+    }
+
+    .content.maintenance-mode .maintenance-panel {
+      display: block;
+    }
+
     .footer {
       max-width: 1180px;
       margin: 40px auto 0;
@@ -279,8 +307,8 @@
       </ul>
     </aside>
 
-    <main class="content">
-      <section class="panel">
+    <main class="content" id="contentArea">
+      <section class="panel calculator-panel">
         <h1 id="categoryTitle">더블롤 제작 계산기</h1>
         <div class="grid-2">
           <div class="field">
@@ -294,7 +322,7 @@
         </div>
       </section>
 
-      <section class="panel">
+      <section class="panel calculator-panel">
         <div class="grid-2">
           <div class="field">
             <label>원단1 선택</label>
@@ -316,7 +344,7 @@
         </div>
       </section>
 
-      <section class="panel">
+      <section class="panel calculator-panel">
         <div class="table-wrap">
           <table>
             <thead>
@@ -336,6 +364,11 @@
         </div>
         <div class="range-note">제작가능 범위 : 반지름 R &lt; 22mm</div>
       </section>
+
+      <section class="panel maintenance-panel" id="maintenancePanel">
+        <h1 class="maintenance-title">점검중</h1>
+        <p class="maintenance-message">투웨이 계산기는 아직 제작 중입니다.</p>
+      </section>
     </main>
   </div>
 
@@ -343,7 +376,7 @@
     const categories = {
       double: "더블롤 제작 계산기",
       duo: "듀오롤 제작 계산기",
-      twoWay: "투웨이 제작 계산기"
+      twoWay: "투웨이 점검중"
     };
 
     const fabricGroups = {
@@ -447,6 +480,7 @@
       group2: "롤"
     };
 
+    const contentAreaEl = document.getElementById("contentArea");
     const categoryTitleEl = document.getElementById("categoryTitle");
     const categoryButtons = document.querySelectorAll(".tree-node");
     const heightEl = document.getElementById("height");
@@ -512,6 +546,9 @@
 
     function setCategory(category) {
       state.category = category;
+      const isMaintenance = category === "twoWay";
+
+      contentAreaEl.classList.toggle("maintenance-mode", isMaintenance);
       categoryTitleEl.textContent = categories[category];
       document.title = categories[category];
 
@@ -549,6 +586,11 @@
     }
 
     function render() {
+      if (state.category === "twoWay") {
+        tableBodyEl.innerHTML = "";
+        return;
+      }
+
       const H = Number(heightEl.value);
 
       if (!H || H <= 0) {
