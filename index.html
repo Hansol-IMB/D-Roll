@@ -360,7 +360,7 @@
         <div class="grid-2">
           <div class="field">
             <label for="height">높이 H (mm)</label>
-            <input type="number" id="height" value="1800" min="1" step="1" />
+            <input type="number" id="height" value="0" min="0" step="1" />
           </div>
           <div class="field">
             <label>튜브 지름</label>
@@ -432,7 +432,7 @@
 
     const rangeNotes = {
       double: "제작가능 범위 : 반지름 R < 22mm",
-      duo: "제작가능 범위 : 반지름 R <= 28mm",
+      duo: "제작가능 범위 : 반지름 R < 28mm",
       twoWay: ""
     };
 
@@ -597,7 +597,11 @@
         };
       }
 
-      if (radius1 <= maxLimit && radius2 <= maxLimit) {
+      const isWithinMax = state.category === "duo"
+        ? radius1 < maxLimit && radius2 < maxLimit
+        : radius1 <= maxLimit && radius2 <= maxLimit;
+
+      if (isWithinMax) {
         return {
           text: "제작가능 (원단 쓸림 가능성 높음)",
           className: "status-yellow"
